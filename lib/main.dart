@@ -125,17 +125,15 @@ Future<void> _handleYoutubeVideoIntent(String url) async {
 }
 
 Future<void> importItems(String path) async {
-  bool res = await ImportExportService.importMediaItem(path);
-  if (res) {
-    SnackbarService.showMessage("Media Item Imported");
-  } else {
-    res = await ImportExportService.importPlaylist(path);
-    if (res) {
-      SnackbarService.showMessage("Playlist Imported");
-    } else {
-      SnackbarService.showMessage("Invalid File Format");
-    }
+  final context = GlobalRoutes.globalRouterKey.currentContext;
+  if (context == null) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      importItems(path);
+    });
+    return;
   }
+
+  await ImportExportService.handleImportOrRestore(context, path);
 }
 
 Future<void> setHighRefreshRate() async {
@@ -252,7 +250,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           sharedMedia = media;
         });
         if (sharedMedia != null) {
-          processIncomingIntent(sharedMedia!);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            processIncomingIntent(sharedMedia!);
+          });
         }
       });
       if (!mounted) return;
@@ -260,7 +260,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       setState(() {
         // If there's initial shared media, process it
         if (sharedMedia != null) {
-          processIncomingIntent(sharedMedia!);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            processIncomingIntent(sharedMedia!);
+          });
         }
       });
     } catch (error, stackTrace) {
